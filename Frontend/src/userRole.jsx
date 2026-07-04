@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Shield, User, Mail, ShieldCheck, AlertCircle, Loader2, CheckCircle2, ChevronRight } from 'lucide-react';
 import { authenticatedFetch } from "./authFetch"; // Ensure this matches your project structure
 import Footer from "./Footer.jsx"
+
 const translations = {
   en: {
     pageTitle: "Access & Role Management",
@@ -24,14 +25,11 @@ const translations = {
     successRoleMsg: "Role updated successfully!"
   },
   ta: {
-    // Original Keys
     adminProcess: "அட்மின் செயல்முறை",
     categoryOp: "பிரிவுகள் விருப்பங்கள்",
     userToAdmin: "பயனர் முதல் அட்மின் வரை",
     adminPanel: "அட்மின் பேனல்",
     signOut: "வெளியேறு",
-
-    // Page Specific Keys
     pageTitle: "அணுகல் மற்றும் பங்கு மேலாண்மை",
     pageSubtitle: "பயனர் அனுமதிகளை மாற்றி, கணினி நிர்வாகிகளைக் கண்காணிக்கவும்.",
     assignRole: "பங்கு ஒதுக்கீடு",
@@ -59,9 +57,13 @@ const UserRoleManager = () => {
 
   // --- Component State ---
   const [email, setEmail] = useState('');
+  const [availableEmails, setAvailableEmails] = useState([]);
+  const [showDropdown, setShowDropdown] = useState(false);
   const [selectedRole, setSelectedRole] = useState('user');
   const [isLoading, setIsLoading] = useState(false);
   const [toast, setToast] = useState(null);
+
+  const containerRef = useRef(null);
 
   // State to hold the backend response data
   const [systemData, setSystemData] = useState({
@@ -69,6 +71,41 @@ const UserRoleManager = () => {
     admins: { count: 0, emails: [] },
     users: { count: 0, emails: [] }
   });
+
+  // Fetch Available Emails on Load
+  useEffect(() => {
+    const fetchUserEmails = async () => {
+      try {
+        const response = await authenticatedFetch('/user-emails/');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.status === 'success' && Array.isArray(data.emails)) {
+            setAvailableEmails(data.emails);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load user autocomplete list", error);
+      }
+    };
+
+    fetchUserEmails();
+  }, []);
+
+  // Close custom popup if clicking outside of the form input container
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (containerRef.current && !containerRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Filter emails dynamically based on input characters
+  const filteredEmails = availableEmails.filter((item) =>
+    item.toLowerCase().includes(email.toLowerCase()) && item.toLowerCase() !== email.toLowerCase()
+  );
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
@@ -83,6 +120,7 @@ const UserRoleManager = () => {
     }
 
     setIsLoading(true);
+    setShowDropdown(false);
 
     try {
       const response = await authenticatedFetch('/change-user-role/', {
@@ -102,7 +140,6 @@ const UserRoleManager = () => {
         throw new Error(data.detail || 'Failed to update user role.');
       }
 
-      // Update UI with the fresh data directly from your FastAPI response
       setSystemData({
         target: data.target_account,
         admins: data.admins,
@@ -110,7 +147,7 @@ const UserRoleManager = () => {
       });
 
       showToast(data.message || t.successRoleMsg, 'success');
-      setEmail(''); // Reset form
+      setEmail('');
 
     } catch (error) {
       showToast(error.message, 'error');
@@ -123,12 +160,7 @@ const UserRoleManager = () => {
     <>
       <style>{styles}</style>
       <div className="role-manager-wrapper">
-
-        {/* Navbar properly integrated at the top.
-            Ensure your Navbar accepts an onLanguageChange prop to update the state here */}
-
         <div className="container">
-
           <header className="page-header">
             <div className="header-icon">
               <ShieldCheck size={28} />
@@ -140,7 +172,6 @@ const UserRoleManager = () => {
           </header>
 
           <div className="layout-grid">
-
             {/* LEFT COLUMN: ACTION FORM */}
             <div className="action-column">
               <div className="glass-card form-card">
@@ -148,16 +179,46 @@ const UserRoleManager = () => {
                 <p className="card-desc">{t.assignDesc}</p>
 
                 <form onSubmit={handleRoleChange}>
-                  <div className="input-group">
+                  {/* Added containerRef to look out for outside clicks */}
+                  <div className="input-group" ref={containerRef}>
                     <div className="input-icon"><Mail size={18} /></div>
                     <input
                       type="email"
                       placeholder={t.emailPlaceholder}
                       className="custom-input"
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        setShowDropdown(true);
+                      }}
+                      onFocus={() => setShowDropdown(true)}
+                      autoComplete="off"
                       required
                     />
+
+                    {/* UI Floating Filtering Popup Box */}
+                    <AnimatePresence>
+                      {showDropdown && email && filteredEmails.length > 0 && (
+                        <motion.ul
+                          className="autocomplete-popup"
+                          initial={{ opacity: 0, y: -5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -5 }}
+                        >
+                          {filteredEmails.map((suggestedEmail) => (
+                            <li
+                              key={suggestedEmail}
+                              onClick={() => {
+                                setEmail(suggestedEmail);
+                                setShowDropdown(false);
+                              }}
+                            >
+                              {suggestedEmail}
+                            </li>
+                          ))}
+                        </motion.ul>
+                      )}
+                    </AnimatePresence>
                   </div>
 
                   <div className="segmented-control">
@@ -183,7 +244,7 @@ const UserRoleManager = () => {
                 </form>
               </div>
 
-              {/* Status Display showing the last modified target */}
+              {/* Status Display */}
               <AnimatePresence>
                 {systemData.target && (
                   <motion.div
@@ -298,12 +359,12 @@ const UserRoleManager = () => {
           )}
         </AnimatePresence>
       </div>
-     <Footer />
+      <Footer />
     </>
   );
 };
 
-// --- CSS ---
+// --- CSS Styles Updated for Popups ---
 const styles = `
   :root {
     --primary: #4F46E5;
@@ -325,8 +386,7 @@ const styles = `
   .role-manager-wrapper {
     min-height: 100vh;
     background: linear-gradient(135deg, var(--bg-color) 0%, #EEF2FF 100%);
-    /* Adjust padding to accommodate the fixed/top navbar if needed */
-    padding: 0 0 3rem 0; 
+    padding: 0 0 3rem 0;
     font-family: 'Inter', system-ui, sans-serif;
     color: var(--text-main);
   }
@@ -337,7 +397,6 @@ const styles = `
     padding: 2rem 1.5rem;
   }
 
-  /* Header */
   .page-header {
     display: flex;
     align-items: center;
@@ -354,7 +413,6 @@ const styles = `
   .page-header h1 { margin: 0 0 0.25rem 0; font-size: 2rem; font-weight: 800; letter-spacing: -0.02em; }
   .subtitle { color: var(--text-muted); margin: 0; font-size: 1rem; }
 
-  /* Grid Layout */
   .layout-grid {
     display: grid;
     grid-template-columns: 1fr 1.2fr;
@@ -365,7 +423,6 @@ const styles = `
     .layout-grid { grid-template-columns: 1fr; }
   }
 
-  /* Cards */
   .glass-card {
     background: var(--card-bg);
     backdrop-filter: blur(12px);
@@ -379,13 +436,40 @@ const styles = `
   .form-card h3 { margin-top: 0; font-size: 1.25rem; margin-bottom: 0.5rem; }
   .card-desc { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 2rem; line-height: 1.5; }
 
-  /* Inputs & Form */
   .input-group { position: relative; margin-bottom: 1.5rem; }
-  .input-icon { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
-  .custom-input { width: 100%; padding: 1rem 1rem 1rem 3rem; border: 2px solid var(--border); border-radius: var(--radius-md); font-size: 1rem; outline: none; transition: all 0.2s; box-sizing: border-box; background: rgba(255,255,255,0.9); }
+  .input-icon { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); z-index: 2; }
+  .custom-input { width: 100%; padding: 1rem 1rem 1rem 3rem; border: 2px solid var(--border); border-radius: var(--radius-md); font-size: 1rem; outline: none; transition: all 0.2s; box-sizing: border-box; background: rgba(255,255,255,0.9); position: relative; z-index: 1; }
   .custom-input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1); }
 
-  /* Segmented Control */
+  /* Autocomplete Custom Dropdown Styles */
+  .autocomplete-popup {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    margin: 4px 0 0 0;
+    padding: 0;
+    list-style: none;
+    max-height: 200px;
+    overflow-y: auto;
+    box-shadow: var(--shadow-lg);
+    z-index: 100;
+  }
+  .autocomplete-popup li {
+    padding: 0.75rem 1rem 0.75rem 3rem;
+    cursor: pointer;
+    font-size: 0.95rem;
+    color: var(--text-main);
+    transition: background 0.15s ease;
+  }
+  .autocomplete-popup li:hover {
+    background: #F1F5F9;
+    color: var(--primary);
+  }
+
   .segmented-control {
     display: flex;
     background: #F1F5F9;
@@ -431,13 +515,11 @@ const styles = `
   .btn-submit:hover:not(:disabled) { background: #4338CA; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3); }
   .btn-submit:disabled { opacity: 0.7; cursor: not-allowed; }
 
-  /* Target Status Output */
   .target-status-card { margin-top: 1.5rem; padding: 1.5rem; background: linear-gradient(to right, #ffffff, #f8fafc); border-left: 4px solid var(--primary); }
   .target-status-card h4 { margin: 0 0 0.75rem 0; font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
   .target-info { display: flex; justify-content: space-between; align-items: center; }
   .target-email { font-weight: 600; font-size: 1.05rem; }
 
-  /* Directory Lists */
   .directory-card { height: 100%; display: flex; flex-direction: column; }
   .directory-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border); }
   .directory-header h3 { margin: 0; font-size: 1.25rem; }
@@ -449,7 +531,7 @@ const styles = `
   .list-title h4 { margin: 0; font-size: 1.05rem; }
   .text-admin { color: var(--admin-color); }
   .text-user { color: var(--user-color); }
-  
+
   .count-pill { font-size: 0.85rem; font-weight: 700; padding: 0.2rem 0.6rem; border-radius: 99px; }
   .admin-pill { background: var(--admin-bg); color: var(--admin-color); }
   .user-pill { background: var(--user-bg); color: var(--user-color); }
@@ -465,12 +547,10 @@ const styles = `
 
   .divider { border: 0; border-top: 1px dashed var(--border); margin: 2rem 0; }
 
-  /* Badges */
   .badge { font-size: 0.75rem; padding: 0.25rem 0.75rem; border-radius: 99px; font-weight: 700; text-transform: capitalize; }
   .badge-admin { background: var(--admin-bg); color: var(--admin-color); }
   .badge-user { background: var(--user-bg); color: var(--user-color); }
 
-  /* Animations & Utilities */
   .spinner { animation: spin 1s linear infinite; }
   @keyframes spin { 100% { transform: rotate(360deg); } }
   @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
