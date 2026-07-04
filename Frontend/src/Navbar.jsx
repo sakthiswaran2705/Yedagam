@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell, Search, User } from 'lucide-react';
+import logo from "./yedagam_main.jpeg";
 const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
 const Navbar = ({ onLanguageChange }) => {
@@ -367,7 +368,11 @@ const Navbar = ({ onLanguageChange }) => {
 
           {/* Central Branding: YOUR Logo + Red Text styling */}
           <div className="nav-center-brand" onClick={() => navigate("/")}>
-            <img src="/yedagam_main.jpeg" alt="Yedagam Logo" className="navbar-logo-img" />
+            <img
+              src={logo}
+              alt="Yedagam Logo"
+              className="navbar-logo-img"
+            />
             <div className="brand-text-col">
               <h1 className="brand-main-title">
                 {lang === "ta" ? "ஏடகம்" : "Yedagam"}
