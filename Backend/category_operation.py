@@ -19,7 +19,8 @@ if os.path.exists(UPLOAD_DIR):
 elif not os.getenv("VERCEL"):
     os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-# --- HELPER TRANSLATION FUNCTIONS ---
+
+
 
 def translate_text(text: str, source_lang: str = 'en', target_lang: str = 'ta', strict: bool = False) -> str:
     if not text or not text.strip():
