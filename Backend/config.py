@@ -28,14 +28,14 @@ SMTP_HOST = "smtp.gmail.com"
 SMTP_PORT = 587
 
 
-ADMIN_EMAIL = "suthi1008@gmail.com"
+ADMIN_EMAIL = "cholainfotech26@gmail.com"
 
-ADMIN_EMAIL_PASSWORD = "cios xxtd tegj jcau"
+ADMIN_EMAIL_PASSWORD = "xyts obze inkq nbfs"
 
-
-SECRET_KEY = "admin@!"
-REFRESH_SECRET_KEY = "yedagam!"
+SECRET_KEY = os.getenv("SECRET_KEY")
+REFRESH_SECRET_KEY = os.getenv("REFRESH_SECRET_KEY")
 ALGORITHM = "HS256"
+
 
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 REFRESH_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 Days
