@@ -29,13 +29,12 @@ SMTP_PORT = 587
 
 
 
-ADMIN_EMAIL = "cholainfotech26@gmail.com"
+ADMIN_EMAIL = os.getenv("ADMIN_EMAIL")
 
-ADMIN_EMAIL_PASSWORD = "xyts obze inkq nbfs"
+ADMIN_EMAIL_PASSWORD = os.getenv("ADMIN_EMAIL")
 
-
-SECRET_KEY = "admin@!"
-REFRESH_SECRET_KEY = "yedagam!"
+SECRET_KEY = os.getenv("SECRET_KEY")
+REFRESH_SECRET_KEY = os.getenv("ADMIN_EMAIL_PASSWORD")
 ALGORITHM = "HS256"
 
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
