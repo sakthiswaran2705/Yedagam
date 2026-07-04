@@ -12,8 +12,11 @@ import config
 
 router = APIRouter()
 
+
 UPLOAD_DIR = "static/uploads/membership"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+if not os.getenv("VERCEL"):
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 MAX_FILE_SIZE = 2 * 1024 * 1024
 

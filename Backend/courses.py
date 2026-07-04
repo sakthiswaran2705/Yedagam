@@ -9,9 +9,10 @@ from models import CourseCreateResponse, CourseResponse
 from translator import en_to_ta, ta_to_en
 from datetime import datetime
 router = APIRouter()
-
 UPLOAD_DIR = "static/courses"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+if not os.path.exists(UPLOAD_DIR) and not os.getenv("VERCEL"):
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/jpg"]
 MAX_FILE_SIZE = 5 * 1024 * 1024
