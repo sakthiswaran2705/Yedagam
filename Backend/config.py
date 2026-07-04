@@ -28,9 +28,10 @@ SMTP_HOST = "smtp.gmail.com"
 SMTP_PORT = 587
 
 
-ADMIN_EMAIL = "suthi1008@gmail.com"
 
-ADMIN_EMAIL_PASSWORD = "cios xxtd tegj jcau"
+ADMIN_EMAIL = "cholainfotech26@gmail.com"
+
+ADMIN_EMAIL_PASSWORD = "xyts obze inkq nbfs"
 
 
 SECRET_KEY = "admin@!"
