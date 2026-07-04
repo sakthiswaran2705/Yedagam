@@ -13,8 +13,11 @@ router = APIRouter()
 
 
 UPLOAD_DIR = "static/uploads"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
 
+if os.path.exists(UPLOAD_DIR):
+    pass
+elif not os.getenv("VERCEL"):
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 # --- HELPER TRANSLATION FUNCTIONS ---
 
