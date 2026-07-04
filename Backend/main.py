@@ -22,8 +22,11 @@ app = FastAPI(
     redoc_url=None
 )
 
-os.makedirs("static/uploads", exist_ok=True)
-app.mount("/static", StaticFiles(directory="static"), name="static")
+if not os.getenv("VERCEL"):
+    os.makedirs("static/uploads", exist_ok=True)
+
+if os.path.exists("static"):
+    app.mount("/static", StaticFiles(directory="static"), name="static")
 
 app.include_router(app_router)
 app.include_router(category_router)
