@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 import os
+from fastapi.middleware.cors import CORSMiddleware
 
 from Yedagam_operations import router as app_router
 from category_operation import router as category_router
@@ -21,7 +22,20 @@ app = FastAPI(
     docs_url="/api/",
     redoc_url=None
 )
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:8081",
+        "http://localhost:5173",
+        "http://localhost:5176",
+        "https://yedagam-frontend.vercel.app"
+    ],
 
+
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 if not os.getenv("VERCEL"):
     os.makedirs("static/uploads", exist_ok=True)
 
