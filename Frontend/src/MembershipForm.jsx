@@ -3,6 +3,7 @@ import Navbar from "./Navbar";
 import { authenticatedFetch } from './authFetch';
 import qrCodeImg from './UPIImage.jpeg';
 import Footer from "./Footer.jsx";
+
 // Centralized UI Translations Dictionary completely matching the condition checklist
 const translations = {
   en: {
@@ -215,7 +216,6 @@ const MembershipForm = ({ onLanguageChange }) => {
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    // Inline Keystroke Validation for Mobile Number Field
     if (name === 'mobile_no') {
       if (value !== '' && !/^\d+$/.test(value)) {
         setFieldErrors((prev) => ({ ...prev, mobile_no: text.errMobileDigits }));
@@ -231,7 +231,8 @@ const MembershipForm = ({ onLanguageChange }) => {
 
   const validateForm = () => {
     const errors = {};
-    const nameRegex = /^[A-Za-z\s]+$/;
+    // UPDATED REGEX: Added \u0B80-\u0BFF block to completely allow native Tamil character sets along with standard English and spaces
+    const nameRegex = /^[A-Za-z\u0B80-\u0BFF\s]+$/;
 
     if (!formData.teaching_course) errors.teaching_course = text.errCourse;
 
@@ -277,7 +278,6 @@ const MembershipForm = ({ onLanguageChange }) => {
       errors.office_or_college_address = text.errAddressReq;
     }
 
-    // Strict Submission-Time Validation Framework for Mobile Number Input
     if (!formData.mobile_no) {
       errors.mobile_no = text.errMobileReq;
     } else if (!/^\d+$/.test(formData.mobile_no)) {
@@ -571,6 +571,7 @@ const MembershipForm = ({ onLanguageChange }) => {
           font-weight: 600;
           text-align: center;
           font-size: 0.95rem;
+          box-sizing: border-box;
         }
         .alert-message.success {
           background-color: #c6f6d5;

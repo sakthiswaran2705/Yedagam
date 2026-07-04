@@ -1005,3 +1005,21 @@ async def delete_notification(notification_id: str):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to delete notification: {str(e)}"
         )
+
+@router.get("/user-emails/", operation_id="get-user-emails")
+async def get_user_emails():
+
+    users = await config.users_collection.find(
+        {},
+        {
+            "_id": 0,
+            "email": 1
+        }
+    ).to_list(length=None)
+
+    emails = [user["email"] for user in users if "email" in user]
+
+    return {
+        "status": "success",
+        "emails": emails
+    }
